@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResToAE | Resolume to After Effects</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #111111;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent-color: #00f0ff; /* Electric Cyan */
+            --accent-glow: rgba(0, 240, 255, 0.4);
+            --border-color: #333333;
+            --kofi-color: #FF5E5B; /* Ko-fi Brand Color */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Layout Wrapper */
+        .app-wrapper {
+            display: flex;
+            align-items: flex-start; /* CHANGED: Let panels size naturally to avoid gaps */
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Main Container */
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            width: 500px;
+            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #222;
+            width: 280px; /* INCREASED: Fits the button text better */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        /* Header Styling */
+        h1 { 
+            margin-top: 0; 
+            margin-bottom: 0.5rem;
+            font-size: 1.4rem; 
+            text-align: center; 
+            color: var(--accent-color); 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+            margin-top: 0;
+            line-height: 1.4;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        /* Drop Zone */
+        .drop-zone {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px dashed var(--text-muted);
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            padding: 2rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-glow) inset;
+            color: var(--accent-color);
+        }
+
+        .drop-zone p { margin: 0; font-size: 0.9rem; color: var(--text-main); font-weight: 500; }
+        .drop-zone span { color: var(--text-muted); font-size: 0.75rem; }
+        
+        /* Inputs */
+        .input-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .input-wrapper label {
+            font-size: 0.7rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="number"] {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--border-color);
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 1.1rem;
+            width: 100%;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 1px 0 var(--accent-color);
+        }
+
+        /* Toggle Switch */
+        .settings-group {
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: 15px;
+        }
+
+        .switch-label { font-size: 0.8rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-glow); }
+        input:checked + .slider:before { transform: translateX(20px); background-color: #000; }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 25px var(--accent-glow);
+            background-color: #fff;
+        }
+
+        .btn:disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn.download {
+            background-color: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            box-shadow: none;
+            margin-top: 15px;
+        }
+        .btn.download:hover {
+            background-color: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        
+        /* Ko-fi Button Styling */
+        .btn-kofi {
+            background-color: var(--card-bg);
+            border: 1px solid var(--kofi-color);
+            color: var(--kofi-color);
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: none;
+            white-space: nowrap; /* Prevents text wrapping */
+        }
+        .btn-kofi:hover {
+            background-color: var(--kofi-color);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 94, 91, 0.4);
+        }
+
+        .success { 
+            color: var(--accent-color); 
+            font-size: 0.8rem; 
+            margin-top: 15px; 
+            text-align: center; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            height: 20px;
+            font-weight: bold;
+        }
+
+        /* CODE BOX STYLING */
+        #codeContainer {
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #080808;
+            color: #e0e0e0;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.75rem;
+            resize: vertical;
+            box-sizing: border-box;
+            line-height: 1.4;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #080808; border-radius: 6px; }
+        textarea::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden { display: none; }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 850px) {
+            .app-wrapper {
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            .container { width: 100%; }
+            .side-panel { width: 100%; box-sizing: border-box; margin-top: 20px; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    <div class="container">
+        <h1>RESOLUME TO AFTER EFFECTS</h1>
+        <p class="subtitle">Converts Resolume Advanced Output .XML to .JSX import script.</p>
+        
+        <div id="dropZone" class="drop-zone">
+            <p>DROP XML FILE</p>
+            <span id="fileNameDisplay">or click to browse</span>
+            <input type="file" id="fileInput" accept=".xml" class="hidden">
+        </div>
+
+        <div class="input-row">
+            <div class="input-wrapper">
+                <label>Width</label>
+                <input type="number" id="inputW" value="3840">
+            </div>
+            <div class="input-wrapper">
+                <label>Height</label>
+                <input type="number" id="inputH" value="2160">
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <label class="switch">
+                <input type="checkbox" id="checkLabels" checked>
+                <span class="slider"></span>
+            </label>
+            <span class="switch-label">Generate Text Labels</span>
+        </div>
+
+        <button id="generateBtn" class="btn" disabled>Generate Script</button>
+        
+        <div id="statusMsg" class="success"></div>
+
+        <div id="codeContainer">
+            <textarea id="outputCode" readonly spellcheck="false"></textarea>
+        </div>
+
+        <button id="downloadBtn" class="btn download hidden">Download .jsx</button>
+    </div>
+
+    <div class="side-panel">
+        
+        <h4 style="margin: 0 0 10px 0; color: #fff; text-transform: uppercase; letter-spacing: 1px;">Info</h4>
+        <p style="font-size: 0.75rem; color: #666; margin: 0;">
+            <b>ResToAE v1.0</b><br>
+            Free & Open Source.<br>
+			<a href="https://AuxVR.github.io/ResToAE/" target="_blank">Github Repository</a><br>
+			Runs locally in browser.
+        </p>
+        
+        <div style="width: 100%; height: 1px; background: #333; margin: 20px 0;"></div>
+        
+        <h4 style="margin: 0 0 10px 0; color: #fff; text-transform: uppercase; letter-spacing: 1px;">Usage</h4>
+        <p style="font-size: 0.75rem; color: #888; line-height: 1.4; margin: 0; text-align: left; padding: 0 10px;">
+            1. Download .jsx script<br>
+            2. Open After Effects<br>
+            3. File > Scripts > Run Script File...
+        </p>
+
+        <div style="width: 100%; height: 1px; background: #333; margin: 20px 0;"></div>
+        
+        <h4 style="margin: 0 0 10px 0; color: #fff; text-transform: uppercase; letter-spacing: 1px;">Support</h4>
+        <p style="font-size: 0.8rem; color: #888; line-height: 1.4; margin-bottom: 15px;">
+            If this tool saves you time, consider buying me a coffee.
+        </p>
+        <a href="https://ko-fi.com/auxvr" target="_blank" class="btn btn-kofi">
+            <span>♥ Support me on Kofi</span>
+        </a>
+        
+    </div>
+</div>
+
+<script>
+    let xmlContent = null;
+    let fileName = "ResolumeImport";
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const inputW = document.getElementById('inputW');
+    const inputH = document.getElementById('inputH');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const outputCode = document.getElementById('outputCode');
+    const codeContainer = document.getElementById('codeContainer');
+    const statusMsg = document.getElementById('statusMsg');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+    // Drag & Drop Handlers
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+        if (file.type !== "text/xml" && !file.name.endsWith(".xml")) {
+            alert("Please upload a valid XML file.");
+            return;
+        }
+        fileName = file.name.replace('.xml', '');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            xmlContent = e.target.result;
+            parseResolution(xmlContent);
+            generateBtn.disabled = false;
+            fileNameDisplay.innerHTML = `<span style="color:#00f0ff; font-weight:bold;">${file.name}</span> LOADED`;
+            statusMsg.textContent = "";
+            downloadBtn.classList.add('hidden');
+            codeContainer.style.display = 'none';
+        };
+        reader.readAsText(file);
+    }
+
+    function parseResolution(xmlString) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+        let width, height;
+        const compTex = xmlDoc.getElementsByTagName("CurrentCompositionTextureSize")[0];
+        
+        if (compTex) {
+            width = compTex.getAttribute("width");
+            height = compTex.getAttribute("height");
+        } else {
+            const inputSize = xmlDoc.querySelector("ScreenSetup > sizing > inputs > InputSize");
+            if (inputSize) {
+                width = inputSize.getAttribute("width");
+                height = inputSize.getAttribute("height");
+            }
+        }
+        if (width && height) {
+            inputW.value = width;
+            inputH.value = height;
+        }
+    }
+
+    generateBtn.addEventListener('click', () => {
+        if (!xmlContent) return;
+        const script = buildAEScript();
+        
+        outputCode.value = script;
+        codeContainer.style.display = 'block';
+        
+        downloadBtn.classList.remove('hidden');
+        statusMsg.textContent = "SCRIPT GENERATED SUCCESSFULLY";
+        
+        const blob = new Blob([script], {type: 'text/javascript'});
+        const url = URL.createObjectURL(blob);
+        downloadBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Import_${fileName}.jsx`;
+            a.click();
+        };
+    });
+
+    function buildAEScript() {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+        const slices = xmlDoc.getElementsByTagName("Slice");
+        const useLabels = document.getElementById('checkLabels').checked;
+        const compW = inputW.value;
+        const compH = inputH.value;
+
+        let scriptData = [];
+
+        for (let i = 0; i < slices.length; i++) {
+            const slice = slices[i];
+            
+            let sliceName = "Slice " + (i + 1);
+            const params = slice.getElementsByTagName("Param");
+            for(let p of params) {
+                if(p.getAttribute("name") === "Name") {
+                    sliceName = p.getAttribute("value");
+                    break;
+                }
+            }
+
+            if (sliceName.toUpperCase().includes("DECO") || sliceName.toUpperCase().includes("DUMMY")) continue;
+
+            const inputRect = slice.getElementsByTagName("InputRect")[0];
+            if (!inputRect) continue;
+            
+            const verts = inputRect.getElementsByTagName("v");
+            if (verts.length < 4) continue;
+
+            const v0 = { x: parseFloat(verts[0].getAttribute("x")), y: parseFloat(verts[0].getAttribute("y")) };
+            const v1 = { x: parseFloat(verts[1].getAttribute("x")), y: parseFloat(verts[1].getAttribute("y")) };
+            const v3 = { x: parseFloat(verts[3].getAttribute("x")), y: parseFloat(verts[3].getAttribute("y")) };
+
+            const width = Math.round(Math.sqrt(Math.pow(v1.x - v0.x, 2) + Math.pow(v1.y - v0.y, 2)));
+            const height = Math.round(Math.sqrt(Math.pow(v3.x - v0.x, 2) + Math.pow(v3.y - v0.y, 2)));
+            
+            const v2 = { x: parseFloat(verts[2].getAttribute("x")), y: parseFloat(verts[2].getAttribute("y")) };
+            const centerX = (v0.x + v2.x) / 2;
+            const centerY = (v0.y + v2.y) / 2;
+
+            let rot = 0;
+            const orientation = parseFloat(inputRect.getAttribute("orientation") || 0);
+            if(orientation !== 0) rot = Math.round(orientation * (180/Math.PI) * 10) / 10;
+
+            scriptData.push({
+                name: sliceName.replace(/"/g, '\\"'),
+                w: width,
+                h: height,
+                x: centerX,
+                y: centerY,
+                r: rot,
+                v0x: Math.round(v0.x),
+                v0y: Math.round(v0.y)
+            });
+        }
+
+        return `
+{
+    function buildResolumeComp() {
+        app.beginUndoGroup("Resolume Web Import");
+
+        // 1. Create Main Input Comp
+        var mainCompName = "Input Map - ${fileName}";
+        var mainComp = app.project.items.addComp(mainCompName, ${compW}, ${compH}, 1, 300, 30);
+        
+        // Add Black Background (Locked)
+        var bg = mainComp.layers.addSolid([0,0,0], "Background Black", ${compW}, ${compH}, 1);
+        bg.locked = true;
+
+        // Folder for Precomps
+        var precompFolder = app.project.items.addFolder("Slice_Precomps");
+        
+        var slices = ${JSON.stringify(scriptData, null, 4)};
+
+        for (var i = 0; i < slices.length; i++) {
+            var data = slices[i];
+            
+            // 2. Create Precomp for Slice
+            var preName = "Content_" + data.name;
+            var preComp = app.project.items.addComp(preName, data.w, data.h, 1, 300, 30);
+            preComp.parentFolder = precompFolder;
+            
+            // Add White Placeholder [1,1,1]
+            preComp.layers.addSolid([1, 1, 1], "Placeholder", data.w, data.h, 1);
+
+            // 3. Add to Main Comp
+            var layer = mainComp.layers.add(preComp);
+            layer.position.setValue([data.x, data.y]);
+            layer.rotation.setValue(data.r);
+
+            // 4. Optional Text Label
+            if (${useLabels}) {
+                var labelStr = data.name + "\\r" + data.w + "x" + data.h + "\\r(" + data.v0x + ", " + data.v0y + ")";
+                var txtLayer = mainComp.layers.addText(labelStr);
+                txtLayer.shy = true; 
+                
+                var tProp = txtLayer.property("Source Text");
+                var tDoc = tProp.value;
+                tDoc.fontSize = 24;
+                tDoc.fillColor = [0, 0, 0];
+                tDoc.justification = ParagraphJustification.CENTER_JUSTIFY;
+                tDoc.font = "ArialMT";
+                tProp.setValue(tDoc);
+                
+                txtLayer.position.setValue([data.x, data.y]);
+                txtLayer.parent = layer;
+            }
+        }
+
+        app.endUndoGroup();
+        alert("Import Complete! Created " + slices.length + " slices.");
+    }
+    buildResolumeComp();
+}
+        `;
+    }
+</script>
+</body>
+</html>
