@@ -33,7 +33,7 @@
         /* Layout Wrapper */
         .app-wrapper {
             display: flex;
-            align-items: flex-start; /* CHANGED: Let panels size naturally to avoid gaps */
+            align-items: flex-start;
             gap: 20px;
             max-width: 1000px;
             width: 100%;
@@ -60,7 +60,7 @@
             padding: 2rem;
             border-radius: 12px;
             border: 1px solid #222;
-            width: 280px; /* INCREASED: Fits the button text better */
+            width: 280px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -85,6 +85,7 @@
         p.subtitle {
             color: var(--text-muted);
             font-size: 0.75rem;
+            text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 2rem;
             margin-top: 0;
@@ -160,9 +161,16 @@
             box-shadow: 0 1px 0 var(--accent-color);
         }
 
-        /* Toggle Switch */
-        .settings-group {
+        /* Toggle Switch Group */
+        .settings-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Space between toggles */
             margin-bottom: 2rem;
+        }
+
+        .settings-group {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -255,7 +263,7 @@
             justify-content: center;
             align-items: center;
             box-shadow: none;
-            white-space: nowrap; /* Prevents text wrapping */
+            white-space: nowrap; 
         }
         .btn-kofi:hover {
             background-color: var(--kofi-color);
@@ -352,12 +360,22 @@
             </div>
         </div>
 
-        <div class="settings-group">
-            <label class="switch">
-                <input type="checkbox" id="checkLabels" checked>
-                <span class="slider"></span>
-            </label>
-            <span class="switch-label">Generate Text Labels</span>
+        <div class="settings-wrapper">
+            <div class="settings-group">
+                <label class="switch">
+                    <input type="checkbox" id="checkReuse">
+                    <span class="slider"></span>
+                </label>
+                <span class="switch-label">Pre-compose Identical Slices</span>
+            </div>
+
+            <div class="settings-group">
+                <label class="switch">
+                    <input type="checkbox" id="checkLabels" checked>
+                    <span class="slider"></span>
+                </label>
+                <span class="switch-label">Generate Text Labels</span>
+            </div>
         </div>
 
         <button id="generateBtn" class="btn" disabled>Generate Script</button>
@@ -375,10 +393,10 @@
         
         <h4 style="margin: 0 0 10px 0; color: #fff; text-transform: uppercase; letter-spacing: 1px;">Info</h4>
         <p style="font-size: 0.75rem; color: #666; margin: 0;">
-            <b>ResToAE v1.0</b><br>
+            <b>ResToAE v1.1</b><br>
             Free & Open Source.<br>
 			<a href="https://AuxVR.github.io/ResToAE/" target="_blank">Github Repository</a><br>
-			Runs locally in browser.
+            Runs locally in browser.
         </p>
         
         <div style="width: 100%; height: 1px; background: #333; margin: 20px 0;"></div>
@@ -496,7 +514,11 @@
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
         const slices = xmlDoc.getElementsByTagName("Slice");
+        
+        // Get options
         const useLabels = document.getElementById('checkLabels').checked;
+        const reuseSlices = document.getElementById('checkReuse').checked;
+        
         const compW = inputW.value;
         const compH = inputH.value;
 
@@ -566,17 +588,37 @@
         var precompFolder = app.project.items.addFolder("Slice_Precomps");
         
         var slices = ${JSON.stringify(scriptData, null, 4)};
+        
+        // Settings injected from Web UI
+        var reuseSlices = ${reuseSlices};
+        var useLabels = ${useLabels};
+        var precompCache = {};
 
         for (var i = 0; i < slices.length; i++) {
             var data = slices[i];
-            
-            // 2. Create Precomp for Slice
-            var preName = "Content_" + data.name;
-            var preComp = app.project.items.addComp(preName, data.w, data.h, 1, 300, 30);
-            preComp.parentFolder = precompFolder;
-            
-            // Add White Placeholder [1,1,1]
-            preComp.layers.addSolid([1, 1, 1], "Placeholder", data.w, data.h, 1);
+            var preComp;
+
+            if (reuseSlices) {
+                // Reuse Logic: Check if a comp with this WxH already exists
+                var cacheKey = data.w + "x" + data.h;
+                
+                if (precompCache[cacheKey]) {
+                    preComp = precompCache[cacheKey];
+                } else {
+                    var genericName = "Content_" + data.w + "x" + data.h;
+                    preComp = app.project.items.addComp(genericName, data.w, data.h, 1, 300, 30);
+                    preComp.parentFolder = precompFolder;
+                    preComp.layers.addSolid([1, 1, 1], "Placeholder", data.w, data.h, 1);
+                    // Store in cache
+                    precompCache[cacheKey] = preComp;
+                }
+            } else {
+                // Unique Logic (Default): Create new comp for every slice
+                var uniqueName = "Content_" + data.name;
+                preComp = app.project.items.addComp(uniqueName, data.w, data.h, 1, 300, 30);
+                preComp.parentFolder = precompFolder;
+                preComp.layers.addSolid([1, 1, 1], "Placeholder", data.w, data.h, 1);
+            }
 
             // 3. Add to Main Comp
             var layer = mainComp.layers.add(preComp);
@@ -584,7 +626,7 @@
             layer.rotation.setValue(data.r);
 
             // 4. Optional Text Label
-            if (${useLabels}) {
+            if (useLabels) {
                 var labelStr = data.name + "\\r" + data.w + "x" + data.h + "\\r(" + data.v0x + ", " + data.v0y + ")";
                 var txtLayer = mainComp.layers.addText(labelStr);
                 txtLayer.shy = true; 
