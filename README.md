@@ -43,7 +43,7 @@ This tool is a static web application. You can use it in two ways:
 
 ## ❤️ Support
 
-This tool is free and open source. If it saves you hours of manual pixel mapping on your next gig, consider supporting the project!
+This tool is free and open source. If it saves you hours of manual pixel mapping on your next gig, consider supporting!
 
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/AuxVR)
 
